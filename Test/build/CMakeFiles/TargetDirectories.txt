@@ -1,0 +1,3 @@
+C:/dev/handmade_hero/build/CMakeFiles/handmade_hero.dir
+C:/dev/handmade_hero/build/CMakeFiles/ALL_BUILD.dir
+C:/dev/handmade_hero/build/CMakeFiles/ZERO_CHECK.dir
