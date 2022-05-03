@@ -7,7 +7,7 @@ int CALLBACK WinMain(
     HINSTANCE hPrevInstance,
     LPSTR lpCmdShow,
     int nCmdShow)
-{ 
+{
 
     foo();
 }
