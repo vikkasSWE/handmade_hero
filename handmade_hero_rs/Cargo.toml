@@ -1,0 +1,13 @@
+[package]
+name = "handmade_hero_rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies.windows]
+version = "0.36.1"
+features = ["Win32_UI_WindowsAndMessaging", "Win32_Foundation", "Win32_Graphics_Gdi", "Win32_System_LibraryLoader", "Win32_System_Memory", "Win32_System_Diagnostics_Debug"]
+
+[profile.dev]
+# optimize dev builds needed to match hh performance ,  uncomment for visual studio debugger to work better
+# opt-level = 3
+overflow-checks = false 
