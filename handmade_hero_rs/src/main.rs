@@ -12,12 +12,16 @@ use windows::{
             BeginPaint, EndPaint, GetDC, ReleaseDC, StretchDIBits, BITMAPINFO, BITMAPINFOHEADER,
             BI_RGB, DIB_RGB_COLORS, HBRUSH, HDC, PAINTSTRUCT, RGBQUAD, SRCCOPY,
         },
-        Media::Audio::DirectSound::{
-            DirectSoundCreate, IDirectSound, DSBUFFERDESC, DSSCL_PRIORITY,
+        Media::Audio::{
+            DirectSound::{
+                DirectSoundCreate, IDirectSound, IDirectSoundBuffer, DSBCAPS_PRIMARYBUFFER,
+                DSBUFFERDESC, DSSCL_PRIORITY,
+            },
+            WAVEFORMATEX, WAVE_FORMAT_PCM,
         },
         System::{
             Diagnostics::Debug::OutputDebugStringA,
-            LibraryLoader::GetModuleHandleA,
+            LibraryLoader::{GetModuleHandleA, LoadLibraryA},
             Memory::{VirtualAlloc, VirtualFree, MEM_COMMIT, MEM_RELEASE, PAGE_READWRITE},
         },
         UI::{
@@ -197,6 +201,11 @@ pub unsafe extern "system" fn winmain() {
             );
 
             if window != HWND(0) {
+                win32_init_dsound(
+                    window,
+                    (48000 * size_of::<i16>() as u32 * 2) as i32,
+                    48000 as u32,
+                );
                 let mut x_offset = 0;
                 let mut y_offset = 0;
 
@@ -314,16 +323,49 @@ fn render_weird_gradient(buffer: &Win32OffScreenBuffer, x_offset: i32, y_offset:
     }
 }
 
-fn win32_init_dsound(window: HWND) {
+fn win32_init_dsound(window: HWND, buffersize: i32, samples_per_sec: u32) {
     unsafe {
         let mut direct_sound = Some(zeroed::<IDirectSound>());
+        let punkouter: IUnknown = zeroed::<IUnknown>();
 
-        if DirectSoundCreate(zeroed(), &mut direct_sound, test).is_ok() {
+        if DirectSoundCreate(zeroed(), &mut direct_sound, punkouter).is_ok() {
             if direct_sound
+                .clone()
                 .unwrap()
                 .SetCooperativeLevel(window, DSSCL_PRIORITY)
                 .is_ok()
-            {}
+            {
+                let mut buffer_description = zeroed::<DSBUFFERDESC>();
+                buffer_description.dwFlags = DSBCAPS_PRIMARYBUFFER;
+                buffer_description.dwSize = size_of::<DSBUFFERDESC>().try_into().unwrap();
+                let mut primary_buffer = Some(zeroed::<IDirectSoundBuffer>());
+
+                if direct_sound
+                    .unwrap()
+                    .CreateSoundBuffer(
+                        &buffer_description,
+                        &mut primary_buffer,
+                        zeroed::<IUnknown>(),
+                    )
+                    .is_ok()
+                {
+                    let mut wave_format = zeroed::<WAVEFORMATEX>();
+                    wave_format.wFormatTag = WAVE_FORMAT_PCM as u16;
+                    wave_format.nChannels = 2;
+                    wave_format.nSamplesPerSec = samples_per_sec;
+                    wave_format.nBlockAlign =
+                        (wave_format.nChannels * wave_format.wBitsPerSample) / 8;
+                    wave_format.nAvgBytesPerSec =
+                        wave_format.nSamplesPerSec * wave_format.nBlockAlign as u32;
+                    wave_format.wBitsPerSample = 16;
+                    wave_format.cbSize = 8;
+                    if primary_buffer.unwrap().SetFormat(&wave_format).is_ok() {
+                        // finally set the format
+                    } else {
+                    }
+                }
+            }
+        } else {
         }
     }
 }
