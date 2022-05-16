@@ -7,7 +7,7 @@ use std::{
 use windows::{
     core::*,
     Win32::{
-        Foundation::{BOOL, HWND, LPARAM, LRESULT, POINT, RECT, WPARAM},
+        Foundation::{BOOL, ERROR_SUCCESS, HWND, LPARAM, LRESULT, POINT, RECT, WPARAM},
         Graphics::Gdi::{
             BeginPaint, EndPaint, GetDC, ReleaseDC, StretchDIBits, BITMAPINFO, BITMAPINFOHEADER,
             BI_RGB, DIB_RGB_COLORS, HBRUSH, HDC, PAINTSTRUCT, RGBQUAD, SRCCOPY,
@@ -17,11 +17,26 @@ use windows::{
             LibraryLoader::GetModuleHandleA,
             Memory::{VirtualAlloc, VirtualFree, MEM_COMMIT, MEM_RELEASE, PAGE_READWRITE},
         },
-        UI::WindowsAndMessaging::{
-            CreateWindowExA, DefWindowProcA, DispatchMessageA, GetClientRect, PeekMessageA,
-            RegisterClassA, TranslateMessage, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, HCURSOR,
-            HICON, HMENU, MSG, PM_REMOVE, WINDOW_EX_STYLE, WM_ACTIVATEAPP, WM_CLOSE, WM_DESTROY,
-            WM_PAINT, WM_SIZE, WNDCLASSA, WS_OVERLAPPEDWINDOW, WS_VISIBLE,
+        UI::{
+            Input::{
+                KeyboardAndMouse::{
+                    VIRTUAL_KEY, VK_DOWN, VK_ESCAPE, VK_LEFT, VK_RIGHT, VK_SPACE, VK_UP,
+                },
+                XboxController::{
+                    XInputGetState, XINPUT_GAMEPAD, XINPUT_GAMEPAD_A, XINPUT_GAMEPAD_B,
+                    XINPUT_GAMEPAD_BACK, XINPUT_GAMEPAD_DPAD_DOWN, XINPUT_GAMEPAD_DPAD_LEFT,
+                    XINPUT_GAMEPAD_DPAD_RIGHT, XINPUT_GAMEPAD_DPAD_UP,
+                    XINPUT_GAMEPAD_LEFT_SHOULDER, XINPUT_GAMEPAD_RIGHT_SHOULDER, XINPUT_GAMEPAD_X,
+                    XINPUT_GAMEPAD_Y, XINPUT_STATE, XUSER_MAX_COUNT,
+                },
+            },
+            WindowsAndMessaging::{
+                CreateWindowExA, DefWindowProcA, DispatchMessageA, GetClientRect, PeekMessageA,
+                RegisterClassA, TranslateMessage, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, HCURSOR,
+                HICON, HMENU, MSG, PM_REMOVE, WINDOW_EX_STYLE, WM_ACTIVATEAPP, WM_CLOSE,
+                WM_DESTROY, WM_KEYDOWN, WM_KEYUP, WM_PAINT, WM_SIZE, WM_SYSKEYDOWN, WM_SYSKEYUP,
+                WNDCLASSA, WS_OVERLAPPEDWINDOW, WS_VISIBLE,
+            },
         },
     },
 };
@@ -108,6 +123,35 @@ unsafe extern "system" fn win32_main_window_callback(
 
             EndPaint(window, &paint);
         }
+        WM_SYSKEYDOWN | WM_SYSKEYUP | WM_KEYDOWN | WM_KEYUP => {
+            let vk_code = wparam.0 as i32;
+            let was_down: bool = (lparam.0 & (1 << 30)) != 0;
+            let is_down: bool = (lparam.0 & (1 << 31)) == 0;
+            if was_down != is_down {
+                match vk_code as u8 as char {
+                    'W' => {
+                        println!("working W");
+                    }
+                    'A' => {}
+                    'S' => {}
+                    'D' => {}
+                    'Q' => {}
+                    'E' => {}
+                    _ => match VIRTUAL_KEY(vk_code as u16) {
+                        VK_UP => {
+                            println!("working up!")
+                        }
+                        VK_LEFT => {}
+
+                        VK_DOWN => {}
+                        VK_RIGHT => {}
+                        VK_ESCAPE => {}
+                        VK_SPACE => {}
+                        _ => {}
+                    },
+                }
+            }
+        }
         _ => {
             result = DefWindowProcA(window, message, wparam, lparam);
         }
@@ -168,6 +212,32 @@ pub unsafe extern "system" fn winmain() {
                     while PeekMessageA(&mut message, HWND(0), 0, 0, PM_REMOVE) != BOOL(0) {
                         TranslateMessage(&message);
                         DispatchMessageA(&message);
+                    }
+
+                    for controller_index in 0..XUSER_MAX_COUNT {
+                        let mut controller_state: XINPUT_STATE = zeroed();
+                        if XInputGetState(controller_index, &mut controller_state)
+                            == ERROR_SUCCESS.0
+                        {
+                            let pad: XINPUT_GAMEPAD = controller_state.Gamepad;
+
+                            let _up = pad.wButtons & XINPUT_GAMEPAD_DPAD_UP as u16;
+                            let _down = pad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN as u16;
+                            let _left = pad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT as u16;
+                            let _right = pad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT as u16;
+
+                            let _back = pad.wButtons & XINPUT_GAMEPAD_BACK as u16;
+                            let _left_shoulder = pad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER as u16;
+                            let _right_shoulder =
+                                pad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER as u16;
+                            let _a_button = pad.wButtons & XINPUT_GAMEPAD_A as u16;
+                            let _b_button = pad.wButtons & XINPUT_GAMEPAD_B as u16;
+                            let _x_button = pad.wButtons & XINPUT_GAMEPAD_X as u16;
+                            let _y_button = pad.wButtons & XINPUT_GAMEPAD_Y as u16;
+
+                            let _stick_x = pad.sThumbLX;
+                            let _stick_y = pad.sThumbLY;
+                        }
                     }
 
                     render_weird_gradient(&GLOBAL_BACKBUFFER, x_offset, y_offset);
