@@ -12,6 +12,9 @@ use windows::{
             BeginPaint, EndPaint, GetDC, ReleaseDC, StretchDIBits, BITMAPINFO, BITMAPINFOHEADER,
             BI_RGB, DIB_RGB_COLORS, HBRUSH, HDC, PAINTSTRUCT, RGBQUAD, SRCCOPY,
         },
+        Media::Audio::DirectSound::{
+            DirectSoundCreate, IDirectSound, DSBUFFERDESC, DSSCL_PRIORITY,
+        },
         System::{
             Diagnostics::Debug::OutputDebugStringA,
             LibraryLoader::GetModuleHandleA,
@@ -307,6 +310,20 @@ fn render_weird_gradient(buffer: &Win32OffScreenBuffer, x_offset: i32, y_offset:
                 pixel = pixel.offset(1); // adds sizeof(pixel), 4
             }
             row = row.offset((buffer.width * buffer.bytes_per_pixel) as isize);
+        }
+    }
+}
+
+fn win32_init_dsound(window: HWND) {
+    unsafe {
+        let mut direct_sound = Some(zeroed::<IDirectSound>());
+
+        if DirectSoundCreate(zeroed(), &mut direct_sound, test).is_ok() {
+            if direct_sound
+                .unwrap()
+                .SetCooperativeLevel(window, DSSCL_PRIORITY)
+                .is_ok()
+            {}
         }
     }
 }
