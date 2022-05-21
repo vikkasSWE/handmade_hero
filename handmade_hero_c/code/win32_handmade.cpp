@@ -99,7 +99,7 @@ Win32InitDSound(HWND Window, int32 SamplesPerSecond, int32 BufferSize)
                     }
                     else
                     {
-                        // TDOO: logging
+                        // TODO: logging
                     }
                 }
             }
@@ -574,7 +574,7 @@ WinMain(
     }
     else
     {
-        // TDOO: Logging
+        // TODO: Logging
     }
 
     return 0;
