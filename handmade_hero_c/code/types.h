@@ -16,4 +16,4 @@ typedef double real64;
 #define internal static
 #define local_persist static
 
-#define Pi32 3.14159265359
+#define Pi32 3.14159265359f
