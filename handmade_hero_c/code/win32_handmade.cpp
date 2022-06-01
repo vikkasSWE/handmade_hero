@@ -509,8 +509,10 @@ WinMain(
                         {
                             X = (real32)Pad->sThumbLX / 32767.0f;
                         }
+                        NewController->MinX = NewController->MaxX = NewController->EndX = X;
+
                         real32 Y;
-                        if (Pad->sThumbLX < 0)
+                        if (Pad->sThumbLY < 0)
                         {
                             Y = (real32)Pad->sThumbLY / 32767.0f;
                         }
@@ -519,7 +521,7 @@ WinMain(
                             Y = (real32)Pad->sThumbLY / 32767.0f;
                         }
 
-                        NewController->MinX = NewController->MaxY = NewController->EndY = Y;
+                        NewController->MinY = NewController->MaxY = NewController->EndY = Y;
 
                         Win32ProcessButtonState(&NewController->Up, &OldController->Up, Pad->wButtons, XINPUT_GAMEPAD_A);
                         Win32ProcessButtonState(&NewController->Down, &OldController->Up, Pad->wButtons, XINPUT_GAMEPAD_B);
